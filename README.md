@@ -1,3 +1,7 @@
+Questions:
+
+- Do I add the notebooks? 
+
 # IDP Project 
 
 Author: Andrew Ellul - M.Sc Informatik - Technische Universität München
@@ -7,12 +11,18 @@ This repository is a collection of web-scraping scripts for the analysis of the 
 #### Contents
 
 * 1 - Code
-  * 1A - Reddit 
-  * 1B - 4Chan
-  * 1C - 8Kun
+  * 1A - Reddit Scraper via PRAW API
+  * 1B - 4Chan Scraper via 4Chan API
+  * 1C - 8Kun via HTML scraping
+  * 1D - (Wave 2) 4Chan Scraper via HTML Scraping
+  * 1E - (Wave 2) 8Kun Scraper via HTML Scraping
 * 2 - Data
+  * 2A - Overview
+  * 2B - Data Cleaning
+  * 2C - Explortatory Data Science
+* 3 - Conclusion and Learnings
 
-## 1 - Code 
+# 1 - Code 
 
 To acquire data from these platforms, various options were considered. In some cases, APIs were available, in others where no alternative was found, HTML scraping was used. HTML scraping involves making a simple HTTP request, just as a browser would, and downloading the entire .HTML file. This is akin to visiting a website via the browser and saving the exact page that is returned (with ctrl+s).  In all cases the Python was used as the programming language.
 
@@ -57,7 +67,9 @@ For this reason, threre are 2 different types of web scrapers for 4chan and 8kun
 
 
 
-## A.I - Reddit Scraper via PRAW
+## 1A - Reddit Scraper via PRAW API
+
+***NOTE: In hindsight, it would have been much better to use the Pushshift.io API, this is a much simpler and more relevant API for our usecase. However, at the time of the project, I had decided on PRAW as it allowed for a more customized approach.***
 
 This is a simple Reddit scraper that utilises the Reddit API via the Python PRAW wrapper and outputs a json file with the filtered response.
 
@@ -67,13 +79,17 @@ Documentation for PRAW and its usage can be found here: https://praw.readthedocs
 
 The repository contains one scraper file:
 
-* `scraper_reddit.py`
+* `reddit_scraper.py`
 
 You must setup the `config.ini` file:
-* Create a config.ini file (use the .template file provided) with your `client_id`, `client_secret` and `user_agent` information. This will be used to authenticate with Reddit.
+* Create a config.ini file (use the .template file provided) with your `client_id`, `client_secret` and `user_agent` information. This will be used to authenticate with Reddit. You need some sort of account to access the API this way.
 * Add the desired subreddits to the .ini file subreddit list. The name must match the name in the Reddit URL after the /r/ tag
 
 This script will output 1 file per subreddit and will *update* this file with each subsequent scrape. 
+
+### Run
+
+* Once the config.ini file is configured, simply run `>py reddit_scraper.py` in the terminal with no arguments
 
 ### Notes
 
@@ -86,7 +102,7 @@ This script is intended to be run with a scheduler, such as cron. Therefore, to 
 
 Logging is logged to `scraper_reddit.py.log` 
 
-## 4chan Scraper v0.2
+## 1B - 4Chan Scraper via 4Chan API
 
 This is a simple 4chan scraper that utilises the 4chan API and outputs a json file with the filtered response.
 
@@ -104,17 +120,22 @@ The repository contains two files
 * `4chan_catalog_scraper_simple.py`
 * `4chan_catalog_scraper_custom.py`
 
-#### Simple
+#### Simple (this is just for reference/example)
 
 The simple file is the most basic implementation needed to generate a response from the 4chan API. Run this script from the command-line to generate a JSON file containing the unfiltered response output. 
 
-#### Custom
+#### Custom (use this for scraping)
 
 The custom file is intended to filter out unnecessary clutter from the response (e.g. image dimensions) and to for use by a scheduler (e.g. a cron job). 
 
 This script will generate a new file each time is run, batching the files into a separate folder per day. The result will be a file under `4chan-data/YYYY-MM/YYYY-MM-DD_HH-MM-SS_board.json`
 
-__Note: Although 4chan provides a list of thread objects, the relpies to each thread stored in the 'last_replies' JSON array are not exhaustive. Therefore, frequent scraping is required to ensure replies to threads are gathered as they are posted.__
+
+
+### Notes
+
+* For each thread, the API only returns the last 10 comments, in the case of older threads with hundreds of comments, this is obviously prolematic and one of the reasons that I decided to stop using the API for the second scrape.
+* Although 4chan provides a list of thread objects, the relpies to each thread stored in the 'last_replies' JSON array are not exhaustive. Therefore, frequent scraping is required to ensure replies to threads are gathered as they are posted.
 
 ### Scheduling and Logging 
 
@@ -134,14 +155,98 @@ The filenames and logging are the same as above.
 
 Note: I included a timeout method in the 8kun scraper (using signal.alarm) since 8kun sometimes randomly hangs or blocks the connection. This results in the scraper hanging on trying to download one specific post. After 60 seconds of waiting, that post html page will be abandoned and the next will be attempted. This is a rare occurrence and I have included a wait method between each request to reduce the risk of being blocked but it does still periodically occur.
 
+
+
+# 2 - Data
+
+## 2A - Overview
+
+Here I present the results of the web scraping attempts, and some statistical information regarding the data collected. 
+
+The data collection period of the live web scraping (wave 1) was 11th June 2020 - 4th August 2020:
+
+![image-20210604235334201](markdown-images/image-20210604235334201.png)
+
+Overall both waves yielded the following numbers in data volume:
+
+| Platform | Scraped Data                                       | Dataset after cleaning                                | Total Objects                                      |
+| -------- | -------------------------------------------------- | ----------------------------------------------------- | -------------------------------------------------- |
+| Reddit   | 8.83Gb                                             | n/a                                                   | n/a                                                |
+| 4Chan    | Scrape 1: 56.6 Mb (API) \| Scrape 2: 7.51Gb (HTML) | Scrape 1: n/a (too small) \| Scrape 2: 466.9Mb (HTML) | 21,681 Unique Threads \| 2,266,232 Unique Comments |
+| 8Kun     | Scrape 1: 2.47Gb (HTML)                            | Scrape 1: 18.1Mb (HTML)                               | 1,024 Unique Threads \| 41,319 Unique Comments     |
+
+
+
+## 2B - Data Cleaning 
+
+### Conversion Scripts
+
+The conversion scripts are needed in order to convert the raw .HTML pages we scraped, into meaningful JSON data files. Almost all of the text and contents of the HTML files is thrown away, as we extract only specific metadata such as timestamps, usernames and comment bodies.
+
+![image-20210604231808768](markdown-images/image-20210604231808768.png)
+
+
+
+## 2C - Exploratory Data Science
+
+
+
+### Google Perspective
+
+
+
+![image-20210604232041526](markdown-images/image-20210604232041526.png)
+
+### Topic Modelling
+
+![image-20210604232111751](markdown-images/image-20210604232111751.png)
+
+![image-20210604232222430](markdown-images/image-20210604232222430.png)
+
+![image-20210604233029596](markdown-images/image-20210604233029596.png)
+
+
+
+
+
 ## Conclusion and Learnings
 
 Some of the take-aways from this project that I can share
 
 * Web Scraping
+
   * HTML Scraping is the most reliable and simplest form of scraping and should be seen as the default solution when scraping internet forums. This is because of the WYSIWYG principle. Essentially what you see through the browser is what you receive as data. The risk that an API filters out certain data is bypassed. Additonally, HTML Scraping, when done properly, is less likely to run into threshold issues where only so many requests per second are allowed. This depends on the effectiveness of the infrastructure security policy of the website itself, but is usually quite high to allow for high traffic and is only really intended to guard against DDoS attacks. Whereas APIs can very easily have a built-in request threshold, serving only so many responses per second
   * APIs may be a quicker solution when writing code, but this may be a trade off where data integrity and service availability is sacrificed. APIs should be regarded with caution unless they have a proven record as being reliable (e.g. Twitter API)
+
 * Data
+
   * Decisions filtering
   * Topic modelling is useful
-  * 
+
+* •**Experience**
+
+  •The research process
+
+  •Research Scope – ambitious big ideas will likely be difficult to navigate and the workload will grow
+
+  •Research Question – must be thoroughly defined and as narrow as possible
+
+  •Data
+
+  •Filtering decisions should be based on some sort of hypotheses or previous research not just filtering by keywords (e.g. how and where does one get those keywords?)
+
+  •**Failures/Mistakes**
+
+  •Project was too broad (too many platforms, too much data)
+
+  •Research question was not well defined (look changes in hate speech over time)
+
+  •Key decisions and methodology were not defined at the start
+
+  •How do we filter for corona related comments from our dataset? What does the research suggest?
+
+  •What type of analyses do we want to perform? 
+
+  •What algorithms and what visualisations do we want to generate?
+
+  •Finally, attempting to “look for something interesting” rather than testing a concrete theory
