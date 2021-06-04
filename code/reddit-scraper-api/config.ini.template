@@ -1,0 +1,13 @@
+[auth]
+client_id: 
+client_secret: 
+user_agent: 
+
+[subreddits]
+subredditsToScrape: [
+    "AskReddit",
+    "news",
+    "movies",
+    "askscience",
+    "books"
+    ]
