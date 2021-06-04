@@ -1,21 +1,49 @@
-# Web Scrapers
+# IDP Project 
 
-## Reddit Scraper v0.2
+Author: Andrew Ellul - M.Sc Informatik - Technische Universität München
 
-__Note: This is an unfinished script under development__
+This repository is a collection of web-scraping scripts for the analysis of the online forums Reddit, 4Chan and 8Kun. The scraped is not publically available via this repository, but can be shared on request.
+
+#### Contents
+
+* A. Code
+  * A.I Reddit 
+  * A.II 4Chan
+  * A.III 8Kun
+* B. Data
+
+## A. - Code 
+
+To acquire data from these platforms, various options were considered. In some cases, APIs were available, in others where no alternative was found, HTML scraping was used. In all cases the Python was used as the programming language.
+
+
+
+<u>Infrastructure Setup</u>
+
+Before I go into detail on the scraper scripts themselves, I will provide a 'big-picture' overview of how everything worked from input to output. 
+
+
+
+![scraper_architecture](markdown-images/scraper_architecture.png)
+
+HTML Scrapers
+
+
+
+
+
+## A.I - Reddit Scraper via PRAW
 
 This is a simple Reddit scraper that utilises the Reddit API via the Python PRAW wrapper and outputs a json file with the filtered response.
 
 Documentation for PRAW and its usage can be found here: https://praw.readthedocs.io/en/latest/
 
-### TODO
-
-1. Enable access to quarantined subreddits - PRAW has a method for this but it does not work, possibly a bug
-2. Increase thread count per scrape
-
 ### Usage 
 
+![image-20210604145236321](markdown-images/image-20210604145236321.png)
+
 The repository contains one scraper file:
+
 * `scraper_reddit.py`
 
 You must setup the `config.ini` file:
@@ -24,7 +52,10 @@ You must setup the `config.ini` file:
 
 This script will output 1 file per subreddit and will *update* this file with each subsequent scrape. 
 
-__Note: Reddit does not provide a mechanism to download ALL submissions from a subreddit. Therefore, we are only able to collect the top X amount of submissions (API caps at around 1000). This is configurable at your discretion, we chose to scrape 20 posts per 5 minutes, including all comments contained in those posts__
+### Notes
+
+1. This method does not allow access to quarantined subreddits - PRAW has a method for this but it does not work
+2. Reddit does not provide a mechanism to download ALL submissions from a subreddit. Therefore, we are only able to collect the top X amount of submissions (API caps at around 1000). This is configurable at your discretion, we chose to scrape 20 posts per 5 minutes, including all comments contained in those posts
 
 ### Scheduling and Logging 
 
@@ -33,8 +64,6 @@ This script is intended to be run with a scheduler, such as cron. Therefore, to 
 Logging is logged to `scraper_reddit.py.log` 
 
 ## 4chan Scraper v0.2
-
-__Note: This is an unfinished script under development__
 
 This is a simple 4chan scraper that utilises the 4chan API and outputs a json file with the filtered response.
 
