@@ -11,11 +11,13 @@ This repository is a collection of web-scraping scripts for the analysis of the 
 #### Contents
 
 * 1 - Code
-  * 1A - Reddit Scraper via PRAW API
-  * 1B - 4Chan Scraper via 4Chan API
-  * 1C - 8Kun via HTML scraping
-  * 1D - (Wave 2) 4Chan Scraper via HTML Scraping
-  * 1E - (Wave 2) 8Kun Scraper via HTML Scraping
+  * First Wave: Live Web Scraping
+    * 1A - Reddit Scraper via PRAW API
+    * 1B - 4Chan Scraper via 4Chan API
+    * 1C - 8Kun via HTML scraping
+  * Second Wave: HTML Archive Scraping
+    * 1D - (Wave 2) 4Chan Scraper via HTML Scraping
+    * 1E - (Wave 2) 8Kun Scraper via HTML Scraping
 * 2 - Data
   * 2A - Overview
   * 2B - Data Cleaning
@@ -49,21 +51,11 @@ Some of these scripts also have a config file (the reddit scraper), in which the
 
 ![scraper_architecture](markdown-images/scraper_architecture.png)
 
-The scrapers request the lastest posts and comments from each platform, since it is not possible to download all historical data. Web scraping itself is usually about collecting the latest incoming information, rather than accessing historic records. Once the web scraping starts, the script will collect sweep a certain amount of latest posts will collect e.g. all top 50 new posts in a subreddit. This number is adujstable, and should be based on the intervals between scrapes. It is important to note that running the script once will do one single scrape, of all boards / subreddits listed. Once the script has acquired the information from one subreddit, it will iterate through to the next subreddit until all subreddits have been visited. Once the list has been completed, the script will terminate. 
+The scrapers request the lastest posts and comments from each platform, since it is not possible to download all historical data. In this case we were interested in collecting the latest incoming information, rather than accessing historic records. Once the web scraping starts, the script will collect  a certain amount of latest posts will collect e.g. all top 50 new posts in a subreddit. This number is adujstable, and should be based on the intervals between scrapes. It is important to note that running the script once will do one single scrape, of all boards / subreddits listed. Once the script has acquired the information from one subreddit, it will iterate through to the next subreddit until all subreddits have been visited. Once the list has been completed, the script will terminate. 
 
 Due to this, the script needs to be run at regular intervals to continually gather the latest posts of a period of time (days, weeks, months). To automate the requests, I used a built-in Unix scheduling tool called Cron. A Cron job is simply a command that tells the computer to do something (e.g. run a python script) at a certain time or at regular intervals. It is the standard tool for automating the running of scripts to perform tasks in the OS, not just web scraping. 
 
 To ensure that this all worked uninterrupted, instead of runnning this all from my local machine, I deployed these scripts onto an Amazon AWS EC2 Linux instance, which I left running for the duration of the scrape. The files (data and log files) were also stored locally on the EC2 file system. Once the scraping period was completed, I downloaded all files onto my local machine using SFTP (a recommended tool for this is FileZilla - https://filezilla-project.org/)
-
-
-
-## Second Wave: HTML Archive Scraping of 4Chan, 8Kun
-
-The first wave was live, during the period of intended data collection, June - August 2020, the second was a retroactive scrape, which was done due to issues with the first wave. The issues were that the API of 4chan seemed to have provided extremely little in the way of content over the 8 week period (50Mb in total). Also for 8kun, the HTML scraping for similar reasons was not as successful.
-
-However, it turns out that there exist archives / historical records of 4chan and 8kun posts, whose URLs are structured and easily scrapable. So I wrote new web scrapers in python, this time directly scraping the HTML and downloading the actual web pages for the latest content.  
-
-For this reason, threre are 2 different types of web scrapers for 4chan and 8kun. 
 
 
 
@@ -108,12 +100,6 @@ This is a simple 4chan scraper that utilises the 4chan API and outputs a json fi
 
 Documentation for the API and its usage can be found here: https://github.com/4chan/4chan-API/
 
-### TODO
-
-1. Multiple board support
-2. Option to store responses in 1 large file 
-3. Support to extract non-recent replies from each thread
-
 ### Usage 
 
 The repository contains two files
@@ -130,10 +116,17 @@ The custom file is intended to filter out unnecessary clutter from the response 
 
 This script will generate a new file each time is run, batching the files into a separate folder per day. The result will be a file under `4chan-data/YYYY-MM/YYYY-MM-DD_HH-MM-SS_board.json`
 
+### Run
 
+* (Running Custom Scraper) 
+* Unlike the reddit scraper, we do not need a configuration file. There is no authentication needed, however we can only scrape one board at a time
+* In the "Setup" section of the code, line 20, provide the board you wish to scrape: `board = 'pol'`
+* run `py 4chan_catalog_scraper_custom.py` 
 
 ### Notes
 
+* Only 1 board can be scraped at a time
+* Contrary to the Reddit scraper, this creates a new file each time the sript is run
 * For each thread, the API only returns the last 10 comments, in the case of older threads with hundreds of comments, this is obviously prolematic and one of the reasons that I decided to stop using the API for the second scrape.
 * Although 4chan provides a list of thread objects, the relpies to each thread stored in the 'last_replies' JSON array are not exhaustive. Therefore, frequent scraping is required to ensure replies to threads are gathered as they are posted.
 
@@ -143,7 +136,7 @@ Logging is logged to `4chan_catalog_scraper_custom.log`
 
 To aid scheduling, the script will store each scrape `.json` file with a timestamp under a folder named with the year and month.
 
-## 8kun Scraper v0.1
+## 1C - 8Kun via HTML scraping
 
 The 8kun scraper uses no APIs or libraries and scrapes simply from the raw HTML returned by 8kun.top
 
@@ -153,7 +146,67 @@ The scraper does the following:
 
 The filenames and logging are the same as above.
 
-Note: I included a timeout method in the 8kun scraper (using signal.alarm) since 8kun sometimes randomly hangs or blocks the connection. This results in the scraper hanging on trying to download one specific post. After 60 seconds of waiting, that post html page will be abandoned and the next will be attempted. This is a rare occurrence and I have included a wait method between each request to reduce the risk of being blocked but it does still periodically occur.
+### Libraries
+
+* Python 'Beautiful Soup' Library - https://www.crummy.com/software/BeautifulSoup/bs4/doc/
+
+### Usage
+
+* Similar to the 4chan script, the only requirement is to define the image board to be scraped. This can be found in "Setup", line 29 `imageBoard = 'pnd'`
+* The script then scrapes the first 10 pages of the board, iteratively visiting these pages and gathering comments.
+* Since this is HTML scraping, we download the whole HTML file - this must later be processed and converted into usable JSON, where we extract the data we are interested and throw away 99% of the rest of the file
+
+### Run
+
+* run `py 8kun-scraper.py` 
+
+### Notes
+
+* I included a timeout method in the 8kun scraper (using signal.alarm) since 8kun sometimes randomly hangs or blocks the connection. This results in the scraper hanging on trying to download one specific post. After 60 seconds of waiting, that post html page will be abandoned and the next will be attempted. This is a rare occurrence and I have included a wait method between each request to reduce the risk of being blocked but it does still periodically occur.
+
+### Scheduling and Logging 
+
+Logging is logged to `4chan_catalog_scraper_custom.log` 
+
+To aid scheduling, the script will store each scrape `.json` file with a timestamp under a folder named with the year and month.
+
+
+
+## Second Wave: HTML Archive Scraping of 4Chan, 8Kun
+
+The first wave was live, during the period of intended data collection, June - August 2020, the second was a retroactive scrape, which was done due to issues with the first wave. The issues were that the API of 4chan seemed to have provided extremely little in the way of content over the 8 week period (50Mb in total). The API for some reason provided only the top 10 most recent comments per post. Also for 8kun, the HTML scraping for similar reasons was not as successful, the HTML pages had a feature were only a subset of comments are shown, and the user had to click a "load more" link, to fetch more comments from the server. This meant that the scraped HTML pages were also lacking in completeness
+
+However, it turns out that there exist archives / historical records of 4chan and 8kun posts, whose URLs are structured and easily scrapable. So I wrote new web scrapers in python, this time directly scraping the HTML and downloading the actual web pages for the latest content.  These pages contained the entire post, including all the comments, so in retrospect, this was and still is the best method to collect data from 4chan and 8kun. 
+
+4chan had a dedicated archive website, whereas 8kun simply had a special immutable URL for each post with all its content. These can be found here: 
+
+* https://archive.4plebs.org/
+  * example archived post: https://archive.4plebs.org/pol/thread/263998273/#263998273
+* 
+
+For this reason, threre are 2 different types of web scrapers for 4chan and 8kun. 
+
+## Conversion Scripts: HTML to JSON
+
+
+
+### Run
+
+* Setup
+  * Data: prepare a folder with the scraped HTML files. Folder name and path to the folder is defined by the variable on line 9 `eightKunDataDir = "8kun-data/"`
+  * Ensure that the folder contains **only** the 8kun html files. If using a MacBook or OSX, there will usually be a hidden .DS_Store file. The must be removed (via the terminal, `rm .DS_Store`) . The script iterates through the files in the folder and attempts to parse them all as HTML files, it will break/throw an exception if an unexcpected file is found.
+  * You also need to explicitly define the first file in the directory, line 10, `firstFile = "2020-06-11_15-00-40_pnd_551.html"`
+* run `python 8kun-conversion_file_1.py`
+* This outputs a file in the script directory, containing all 8kun data in json form: 8kun-scraped-threads-all.json
+* 
+
+
+
+
+
+## 1D - (Wave 2) 4Chan Scraper via HTML Scraping
+
+## 1E - (Wave 2) 8Kun Scraper via HTML Scraping
 
 
 
@@ -195,7 +248,9 @@ The conversion scripts are needed in order to convert the raw .HTML pages we scr
 
 
 
-![image-20210604232041526](markdown-images/image-20210604232041526.png)
+![image-20210605102105253](markdown-images/image-20210605102105253.png)
+
+
 
 ### Topic Modelling
 

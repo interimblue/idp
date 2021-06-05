@@ -6,8 +6,8 @@ from bs4 import BeautifulSoup, Tag, NavigableString
 #===============================================================================
 #                           Variables Init
 #===============================================================================
-eightKunDataDir = "/Users/andrew/Research/Data/Covid-11Jun-to-04Aug-2020/8kun-data/"
-firstFile = "2020-06-14_00-00-40_pnd_2942.html"
+eightKunDataDir = "8kun-data/"
+firstFile = "2020-06-11_15-00-40_pnd_551.html"
 fullFilePath = eightKunDataDir + firstFile
 
 #===============================================================================

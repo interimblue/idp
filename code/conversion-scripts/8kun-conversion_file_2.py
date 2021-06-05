@@ -12,7 +12,7 @@ import os
 #===============================================================================
 
 ### This file contains a list of all thread objects. It contains duplicates, each thread appears e.g. 30 times but in each case that thread may have a unique comment not found in other threads. 
-cleanedDataFilePath = "data/8kun-scraped-threads-all.json"
+cleanedDataFilePath = "8kun-scraped-threads-all.json"
 
 with open(cleanedDataFilePath, 'r') as file:
     json_data = file.read()
@@ -88,9 +88,9 @@ for thread in masterThreadList:
 #===============================================================================
 
 ### Write Master file
-with open("data/8kun-unique-threads-all.json", 'w') as f:
+with open("8kun-unique-threads-all.json", 'w') as f:
     json.dump(masterThreadList, f)
 
 ### Write Sample File
-with open("data/8kun-unique-threads-sample.json", 'w') as f:
+with open("8kun-unique-threads-sample.json", 'w') as f:
     json.dump(eightKunThreadSamples, f)
