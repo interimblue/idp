@@ -1,7 +1,3 @@
-Questions:
-
-- Do I add the notebooks? 
-
 # IDP Project 
 
 Author: Andrew Ellul - M.Sc Informatik - Technische Universität München
@@ -21,9 +17,8 @@ This repository is a collection of web-scraping scripts for the analysis of the 
 
 * 2 - Data
 
-  * 2A - Overview
-  * 2B - Data Cleaning
-  * 2C - Explortatory Data Science
+  * 2A - Exploratory Data Science
+  * 2B - Further Work
 
 * 3 - Conclusion and Learnings
 
@@ -247,11 +242,63 @@ Overall both the following amounts of data were collected during this period:
 
 ### Data Cleaning 
 
-A number of steps were taken to clean the data. Primarily, section 1E was the most important, converting the HTML from 4Chan and 8Kun into JSON.
+A number of steps were taken to clean the data which pimarily involved the work in section 1E, which was the most important, converting the HTML from 4Chan and 8Kun into JSON.
+
+Additionally, before any exploratory data science activities were carried out, several standard NLP pre-processing steps were taken such as the removal of stop-words and lemmatization. This is discussed in the next section "2A - Exploratory Data Science". 
 
 ## 2A - Exploratory Data Science
 
+The goal of this project was to understand the evolution of various forms of hatespeech online, in terms of their lingustic structure (new memes, vocabulary, narratives being created in discussions online). After scraping large volumes of data from various internet forums, we required a method to explore possible topics, keywords or leads to investigate further in the dataset.
+
+For this, we utitlized un unsupservised machine learning method known as LDA Topic modelling using the 'gensim' package. As input data, I used the 4Chan dataset, using the comments as input, as the 4Chan dataset was the largest and richest in terms of content.
+
+All analyses were done via jupyter notebooks.
+
+### Pre-Processing
+
+In order for topic modelling to be effective, we need to filter out as much noise from the data as possible  certain pre-processing steps are taken:
+
+* the dataset is converted to lowercase
+* stop words are filtered out
+* punctuation is filtered out
+* digits are removed
+* email addresses are removed
+* the data is lemmatized
+
+Once the text data has been normalised, we need to break up the corpus from sentences into words. Each sentence is now split into a list of words.
+
+### Results
+
+As this is unsupervised learning, it involves an element of trial, error and adjustment. I experimented by adjusting the hyperparamters and found the best results were generated with the number of target topics set to 30.
+
+The screenshot below shows a visualisation of the resulting topcics, with 3 distinct topic areas and good distribution between 1, 2 and the rest. 
+
+
+
+![image-20210605171633853](markdown-images/image-20210605171633853.png)
+
+Not all these topics are hate-speech related and indeed many of the 'good' topics shown in the graphs above are not relavant to our analysis of hate speech lexicon. However, investigating all the topic keywords further we do find that this yielded some interesting associated topics for further analysis.
+
+![image-20210604232222430](markdown-images/image-20210604232222430.png)
+
+So as a result, we see that indeed some interesting word associations in these topic models were discovered, such as:
+
+* Topic 17 - "vaccine", "state", "police", "force", "election", "bill_gate"
+* Topic 6 - "people", "corona", "government", "virus", "world", "order", "free", "evidence"
+
+In light of these findings, I would say there exists a basis for further work an investigation of the dataset, to gain a more deeper understanding of these topics and the associated language around them.
+
+## 2B - Further Work
+
+The project's scope was greater than what was possible to achieve given the timeline and budget, especially considering the challenges and difficulties encountered with web scraping. Therefore, some ideas and initial work in these directions had to be put on hold, nevertheless I document these for future reference and further work.
+
 ### Google Perspective
+
+The output of the webscraping resulted in vast amounts of textual data that contains both benign and neutral comments as well as hate-speech related content. Currently in this form, aside from crude methods such as filtering for expletives, we have no mechanism by which to evaluate the level of hate-speech contained within a comment or object. 
+
+The Google Cloud platform contains an API known as 'Google Perspective' (https://www.perspectiveapi.com/) which is a service that allows users to send textual content, and receive a toxicity score for the content within the text. The API is powered by machine learning and does not simply look for trigger words but rates the overall sentiment of the input, in terms of agreeableness, aggression and also assess it terms of its levels of spam. 
+
+Below are two examples of a neutral comment and a toxic comment from 4Chan and the scores / responses receved from the Perspective API.
 
 
 
@@ -259,17 +306,19 @@ A number of steps were taken to clean the data. Primarily, section 1E was the mo
 
 
 
-### Topic Modelling
+Due to time, volume and budget constraints I was unable to deploy a solution that would enrich our dataset with toxicity scores. The API limits users to sending 1 request per second and is also a paid service. Having a dataset of 2 million comments for 4Chan alone meant that the cost in terms of time and financial resources would haveg gone beyond the scope of this project.
 
-![image-20210604232111751](markdown-images/image-20210604232111751.png)
+However this may be a good method to incorporate in future hate-speech related data science projects.
 
-![image-20210604232222430](markdown-images/image-20210604232222430.png)
+### Statistical Analyses
+
+I also attemtped to perform some statical analyses on hate-speech trigger words to look at the frequency of term occurrence over time, using known hate speech nicknames listed below and python chartin libraries such as Matplotlib and Seaborn to generate the below visualisations.
 
 ![image-20210604233029596](markdown-images/image-20210604233029596.png)
 
+However due to time constraints I was unable to invest the necessary time and effort in investigating prior research and making decisions based on empircal studies on what terms to look for and how best to run such statistical analyses. 
 
-
-
+Such approaches would be well suited for further work once they are informed with the results of the topic modelling in section 2A.
 
 ## Conclusion and Learnings
 
@@ -282,33 +331,18 @@ Some of the take-aways from this project that I can share
 
 * Data
 
-  * Decisions filtering
-  * Topic modelling is useful
+  * Preprocessing and filtering decisions can have great consequences on the upstream results and later findings of Natural Language Processing projects. Such decisions must be recorded in detail and methods must be informed and chosen based on current emperical research.
+  * LDA Topic modelling proved to be a useful first step in exploratory data analysis of a data set where one is not sure what one is looking for in terms of keywords and topics. It was comparatively easy to setup, there are many tutorials available online and the results proved useful, keeping in mind that unsupervised learning and clustering never produce clear, definite results and are only meant to serve as approximators. 
 
-* •**Experience**
+* Experience
 
-  •The research process
+  * The research process - most of the decisions and discussions at the start were informed by current research especially the idea to look for emerging hate speech terms in online forums during the covid pandemic, however as the deadline drew nearer it became harder due to pressure to continually inform all decisions with emperical research. Decisions such as what terms to filter by suffered as a result. 
+  * The research scope - ambitious at the start but in hindsight the scope was far too broad for the size and budget of the project. I had not anticipated nor planned for any difficulties or things going wrong with the scraping or the dataset, which in turn consumed more and more time to fix. In the future, I will opt for a much much narrower topic, and expand that topic if necessary.
 
-  •Research Scope – ambitious big ideas will likely be difficult to navigate and the workload will grow
+* For future projects
 
-  •Research Question – must be thoroughly defined and as narrow as possible
+  * Key NLP methodology decisions should be defined at the start - it should be clear what kind of data we intend to gather, in what format, how we are going to clean it and evaluate it, with what methods, tools and libraries. 
+  * The failure / success criteria should be evaluated not in a binary form (success or failure) but in terms of steps achieved. Many steps in this project were conducted, althought the final goal was not reached, useful code and a dataset were produced as a result
+  * Finally, I would aim in the future to not 'look for something interesting' in the data in an explaratory manner as I did in this project but would instead aim to test a particular theory or hypothesis that is well and clearly defined at the start
 
-  •Data
-
-  •Filtering decisions should be based on some sort of hypotheses or previous research not just filtering by keywords (e.g. how and where does one get those keywords?)
-
-  •**Failures/Mistakes**
-
-  •Project was too broad (too many platforms, too much data)
-
-  •Research question was not well defined (look changes in hate speech over time)
-
-  •Key decisions and methodology were not defined at the start
-
-  •How do we filter for corona related comments from our dataset? What does the research suggest?
-
-  •What type of analyses do we want to perform? 
-
-  •What algorithms and what visualisations do we want to generate?
-
-  •Finally, attempting to “look for something interesting” rather than testing a concrete theory
+  
