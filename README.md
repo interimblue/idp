@@ -320,9 +320,9 @@ However due to time constraints I was unable to invest the necessary time and ef
 
 Such approaches would be well suited for further work once they are informed with the results of the topic modelling in section 2A.
 
-## Conclusion and Learnings
+## 3 - Conclusion and Learnings
 
-Some of the take-aways from this project that I can share
+Some of the take-aways from this project that I can share:
 
 * Web Scraping
 
